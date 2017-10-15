@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
-namespace Domain
+namespace AppointmentSystem.Domain
 {
     public class Appointment
     {
