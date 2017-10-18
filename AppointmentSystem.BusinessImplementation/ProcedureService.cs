@@ -6,7 +6,7 @@ using AppointmentSystem.Domain;
 using FluentValidation.Results;
 using System.Data.SqlClient;
 using AppointmentSystem.Utils;
-using IniParser;
+using Utils;
 
 namespace AppointmentSystem.BusinessImplementation
 {
@@ -16,20 +16,7 @@ namespace AppointmentSystem.BusinessImplementation
 
 	    public ProcedureService()
 	    {
-		    Connection = new SqlConnection("user id=username;" +
-				"Password=password;" + 
-				"Server=serverurl;" +
-				"Trusted_Connection=yes;" +
-				"Database=database; " +
-				"Connection Timeout=30");
-		    try
-		    {
-			    Connection.Open();
-		    }
-		    catch (SqlException e)
-		    {
-			    throw new BusinessException("Connection to database failed!", e);
-		    }
+		    Connection = new SqlConnection(IniParse.GetConnectionString());
 		}
 
 	    public string CreateProcedure(Procedure procedure)
@@ -41,19 +28,28 @@ namespace AppointmentSystem.BusinessImplementation
 
 		    if (validationSucceded)
 		    {
-			    var writeCommand = new SqlCommand("INSERT INTO procedure (name, duration) " +
+			    try
+			    {
+				    Connection.Open();
+			    }
+			    catch (SqlException e)
+			    {
+				    throw new BusinessException("Connection to database failed!", e);
+			    }
+
+				var writeCommand = new SqlCommand("INSERT INTO procedures (name, duration) " +
 					$"Values ('{procedure.Name}', '{Procedure.GetDurationInMinutes(procedure.Duration)})", Connection);
 			    writeCommand.ExecuteNonQuery();
 			    try
 			    {
-				    var readCommand = new SqlCommand("SELECT * FROM procedure " +
+				    var readCommand = new SqlCommand("SELECT * FROM procedures " +
 						$"WHERE name='{procedure.Name}' " +
 						$"AND duration='{procedure.Duration.Hour * 60 + procedure.Duration.Minute}'",
 					    Connection);
 
 				    var reader = readCommand.ExecuteReader();
 				    reader.Read();
-				    return reader["ProcedureID"].ToString();
+				    return reader["ID"].ToString();
 			    }
 			    catch (SqlException e)
 			    {
@@ -68,7 +64,16 @@ namespace AppointmentSystem.BusinessImplementation
 
 	    public bool UpdateProcedure(Procedure procedure)
 	    {
-		    var updateCommand = new SqlCommand("UPDATE procedure " + 
+		    try
+		    {
+			    Connection.Open();
+		    }
+		    catch (SqlException e)
+		    {
+			    throw new BusinessException("Connection to database failed!", e);
+		    }
+
+			var updateCommand = new SqlCommand("UPDATE procedures " + 
 				$"name = '{procedure.Name}, " + 
 				$"duration='{Procedure.GetDurationInMinutes(procedure.Duration)}' " + 
 				$"WHERE ProcedureID='{procedure.ProcedureID}'",
@@ -78,11 +83,20 @@ namespace AppointmentSystem.BusinessImplementation
 
 	    public bool DeleteProcedure(string id)
 	    {
-			var deleteCommand = new SqlCommand($"DELETE FROM procedure WHERE ProcedureID='{id}'", Connection);
+		    try
+		    {
+			    Connection.Open();
+		    }
+		    catch (SqlException e)
+		    {
+			    throw new BusinessException("Connection to database failed!", e);
+		    }
+
+			var deleteCommand = new SqlCommand($"DELETE FROM procedures WHERE ProcedureID='{id}'", Connection);
 		    deleteCommand.ExecuteNonQuery();
 		    try
 		    {
-				var readCommand = new SqlCommand($"SELECT * FROM procedure WHERE ProcedureID={id}",
+				var readCommand = new SqlCommand($"SELECT * FROM procedures WHERE ProcedureID={id}",
 					Connection);
 
 				var reader = readCommand.ExecuteReader();
@@ -98,7 +112,16 @@ namespace AppointmentSystem.BusinessImplementation
 	    {
 		    try
 		    {
-			    var readCommand = new SqlCommand("SELECT * FROM procedure",
+			    Connection.Open();
+		    }
+		    catch (SqlException e)
+		    {
+			    throw new BusinessException("Connection to database failed!", e);
+		    }
+
+			try
+		    {
+			    var readCommand = new SqlCommand("SELECT * FROM procedures",
 				    Connection);
 			    var reader = readCommand.ExecuteReader();
 			    var procedures = new List<Procedure>();
@@ -123,7 +146,16 @@ namespace AppointmentSystem.BusinessImplementation
 	    {
 		    try
 		    {
-			    var readCommand = new SqlCommand($"SELECT * FROM procedure WHERE ProcedureID={id}",
+			    Connection.Open();
+		    }
+		    catch (SqlException e)
+		    {
+			    throw new BusinessException("Connection to database failed!", e);
+		    }
+
+			try
+		    {
+			    var readCommand = new SqlCommand($"SELECT * FROM procedures WHERE ProcedureID={id}",
 				    Connection);
 			    var reader = readCommand.ExecuteReader();
 			    reader.Read();
