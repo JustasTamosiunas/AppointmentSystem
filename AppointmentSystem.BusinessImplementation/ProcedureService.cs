@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
+﻿using System.Collections.Generic;
 using AppointmentSystem.BusinessContracts;
 using AppointmentSystem.Domain;
 using FluentValidation.Results;
 using System.Data.SqlClient;
+using System.IO;
 using AppointmentSystem.Utils;
-using Utils;
 
 namespace AppointmentSystem.BusinessImplementation
 {
@@ -38,13 +36,13 @@ namespace AppointmentSystem.BusinessImplementation
 			    }
 
 				var writeCommand = new SqlCommand("INSERT INTO procedures (name, duration) " +
-					$"Values ('{procedure.Name}', '{Procedure.GetDurationInMinutes(procedure.Duration)})", Connection);
+					$"Values ('{procedure.Name}', '{procedure.Duration.TotalMinutes}')", Connection);
 			    writeCommand.ExecuteNonQuery();
 			    try
 			    {
 				    var readCommand = new SqlCommand("SELECT * FROM procedures " +
 						$"WHERE name='{procedure.Name}' " +
-						$"AND duration='{procedure.Duration.Hour * 60 + procedure.Duration.Minute}'",
+						$"AND duration='{procedure.Duration.TotalMinutes}'",
 					    Connection);
 
 				    var reader = readCommand.ExecuteReader();
@@ -75,7 +73,7 @@ namespace AppointmentSystem.BusinessImplementation
 
 			var updateCommand = new SqlCommand("UPDATE procedures " + 
 				$"name = '{procedure.Name}, " + 
-				$"duration='{Procedure.GetDurationInMinutes(procedure.Duration)}' " + 
+				$"duration='{procedure.Duration.TotalMinutes}' " + 
 				$"WHERE ProcedureID='{procedure.ProcedureID}'",
 				Connection);
 		    return updateCommand.ExecuteNonQuery() == 1;

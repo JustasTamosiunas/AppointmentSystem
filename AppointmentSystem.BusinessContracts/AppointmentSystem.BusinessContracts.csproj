@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Domain\AppointmentSystem.Domain.csproj" />
+    <ProjectReference Include="..\AppointmentSystem.Domain\AppointmentSystem.Domain.csproj" />
   </ItemGroup>
 
 </Project>

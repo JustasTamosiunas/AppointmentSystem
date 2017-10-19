@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 using AppointmentSystem.Utils;
 using IniParser;
 using IniParser.Model;
+using IniParser.Model.Configuration;
+using IniParser.Parser;
 
-namespace Utils
+namespace AppointmentSystem.Utils
 {
     public static class IniParse
     {
@@ -17,7 +16,7 @@ namespace Utils
 	    {
 		    if (File.Exists("Database.ini"))
 		    {
-			    DbIniData = Parser.ReadFile("TestIniFile.ini");
+			    DbIniData = Parser.ReadFile("Database.ini");
 		    }
 		    else
 		    {
@@ -31,7 +30,7 @@ namespace Utils
 		    connection += $"User Id={DbIniData["Sql"]["userId"]};";
 			connection += $"Password={DbIniData["Sql"]["password"]};";
 			connection += $"Server={DbIniData["Sql"]["server"]};";
-			connection += $"Trusted_Connection={DbIniData["Sql"]["trustedConnection"]};";
+			//connection += $"Trusted_Connection={DbIniData["Sql"]["trustedConnection"]};";
 		    connection += $"Database={DbIniData["Sql"]["database"]};";
 		    connection += $"Connection Timeout={DbIniData["Sql"]["connectionTimeout"]};";
 		    return connection;

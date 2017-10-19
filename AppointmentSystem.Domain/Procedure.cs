@@ -6,7 +6,7 @@ namespace AppointmentSystem.Domain
     {
 		public string ProcedureID { get; set; }
         public string Name { get; set; }
-		public DateTimeOffset Duration { get; set; }
+		public TimeSpan Duration { get; set; }
 
 	    public static Procedure Build (string procedureId, string name, string duration)
 	    {
@@ -15,7 +15,7 @@ namespace AppointmentSystem.Domain
 		    {
 			    ProcedureID = procedureId,
 			    Name = name,
-			    Duration = new DateTimeOffset(new DateTime(0, 0, 0, minutes / 60, minutes, 0))
+			    Duration = new TimeSpan(0, minutes, 0)
 		    };
 	    }
 
@@ -25,13 +25,8 @@ namespace AppointmentSystem.Domain
 		    return new Procedure
 		    {
 			    Name = name,
-			    Duration = new DateTimeOffset(new DateTime(0, 0, 0, minutes / 60, minutes, 0))
-		    };
-	    }
-
-	    public static int GetDurationInMinutes(DateTimeOffset duration)
-	    {
-		    return duration.Hour * 60 + duration.Minute;
+			    Duration = new TimeSpan(0, minutes, 0)
+			};
 	    }
 	}
 }
