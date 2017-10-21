@@ -1,20 +1,23 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using AppointmentSystem.BusinessContracts;
 using AppointmentSystem.Domain;
 using FluentValidation.Results;
 using System.Data.SqlClient;
+using System.Windows.Forms;
 using System.IO;
 using AppointmentSystem.Utils;
+using MySql.Data.MySqlClient;
 
 namespace AppointmentSystem.BusinessImplementation
 {
     public class ProcedureService : IProcedureService
     {
-		public SqlConnection Connection { get; set; }
+		public MySqlConnection Connection { get; set; }
 
 	    public ProcedureService()
 	    {
-		    Connection = new SqlConnection(IniParse.GetConnectionString());
+		    Connection = new MySqlConnection(IniParse.GetConnectionString());
 		}
 
 	    public string CreateProcedure(Procedure procedure)
@@ -30,28 +33,44 @@ namespace AppointmentSystem.BusinessImplementation
 			    {
 				    Connection.Open();
 			    }
-			    catch (SqlException e)
+			    catch (MySqlException ex)
 			    {
-				    throw new BusinessException("Connection to database failed!", e);
+				    switch (ex.Number)
+				    {
+					    case 0:
+						    throw new BusinessException("Cannot connect to server.  Contact administrator", ex);
+					    case 1045:
+						    throw new BusinessException("Invalid username/password, please try again", ex);
+				    }
 			    }
 
-				var writeCommand = new SqlCommand("INSERT INTO procedures (name, duration) " +
+				var writeCommand = new MySqlCommand("INSERT INTO procedures (name, duration) " +
 					$"Values ('{procedure.Name}', '{procedure.Duration.TotalMinutes}')", Connection);
-			    writeCommand.ExecuteNonQuery();
+				writeCommand.ExecuteNonQuery();
 			    try
 			    {
-				    var readCommand = new SqlCommand("SELECT * FROM procedures " +
+				    var readCommand = new MySqlCommand("SELECT * FROM procedures " +
 						$"WHERE name='{procedure.Name}' " +
 						$"AND duration='{procedure.Duration.TotalMinutes}'",
 					    Connection);
 
-				    var reader = readCommand.ExecuteReader();
-				    reader.Read();
-				    return reader["ID"].ToString();
+					var reader = readCommand.ExecuteReader();
+				    if (reader.Read())
+				    {
+					    return reader["ID"].ToString();
+				    }
+				    else
+				    {
+						throw new BusinessException("Cannot save procedure!", new Exception());
+					}
 			    }
 			    catch (SqlException e)
 			    {
 				    throw new BusinessException("Cannot save procedure!", e);
+			    }
+			    finally
+			    {
+				    Connection.Close();
 			    }
 		    }
 		    else
@@ -71,12 +90,14 @@ namespace AppointmentSystem.BusinessImplementation
 			    throw new BusinessException("Connection to database failed!", e);
 		    }
 
-			var updateCommand = new SqlCommand("UPDATE procedures " + 
-				$"name = '{procedure.Name}, " + 
+			var updateCommand = new MySqlCommand("UPDATE procedures SET " + 
+				$"name='{procedure.Name}', " + 
 				$"duration='{procedure.Duration.TotalMinutes}' " + 
-				$"WHERE ProcedureID='{procedure.ProcedureID}'",
+				$"WHERE ID='{procedure.ProcedureID}'",
 				Connection);
-		    return updateCommand.ExecuteNonQuery() == 1;
+			bool update = updateCommand.ExecuteNonQuery() == 1;
+			Connection.Close();
+		    return update;
 	    }
 
 	    public bool DeleteProcedure(string id)
@@ -90,13 +111,12 @@ namespace AppointmentSystem.BusinessImplementation
 			    throw new BusinessException("Connection to database failed!", e);
 		    }
 
-			var deleteCommand = new SqlCommand($"DELETE FROM procedures WHERE ProcedureID='{id}'", Connection);
+			var deleteCommand = new MySqlCommand($"DELETE FROM procedures WHERE ID='{id}'", Connection);
+
 		    deleteCommand.ExecuteNonQuery();
 		    try
 		    {
-				var readCommand = new SqlCommand($"SELECT * FROM procedures WHERE ProcedureID={id}",
-					Connection);
-
+				var readCommand = new MySqlCommand($"SELECT * FROM procedures WHERE ID='{id}'", Connection);
 				var reader = readCommand.ExecuteReader();
 			    return !reader.Read();
 		    }
@@ -104,7 +124,11 @@ namespace AppointmentSystem.BusinessImplementation
 		    {
 				throw new BusinessException("Unable to delete procedure!", e);
 		    }
-	    }
+		    finally
+		    {
+			    Connection.Close();
+		    }
+		}
 
 	    public List<Procedure> GetAllProcedures()
 	    {
@@ -119,16 +143,16 @@ namespace AppointmentSystem.BusinessImplementation
 
 			try
 		    {
-			    var readCommand = new SqlCommand("SELECT * FROM procedures",
+			    var readCommand = new MySqlCommand("SELECT * FROM procedures",
 				    Connection);
-			    var reader = readCommand.ExecuteReader();
+				var reader = readCommand.ExecuteReader();
 			    var procedures = new List<Procedure>();
 				while (reader.Read())
 				{
-					procedures.Add(Procedure.Build(
+					procedures.Add(Procedure.Build( 
 						reader["Name"].ToString(), 
-						reader["Duration"].ToString(), 
-						reader["ProcedureID"].ToString()
+						reader["Duration"].ToString(),
+						reader["ID"].ToString()
 					));
 				}
 
@@ -138,7 +162,11 @@ namespace AppointmentSystem.BusinessImplementation
 		    {
 			    throw new BusinessException("Cannot get procedures!", e);
 		    }
-	    }
+			finally
+			{
+				Connection.Close();
+			}
+		}
 
 	    public Procedure GetProcedure(string id)
 	    {
@@ -153,21 +181,30 @@ namespace AppointmentSystem.BusinessImplementation
 
 			try
 		    {
-			    var readCommand = new SqlCommand($"SELECT * FROM procedures WHERE ProcedureID={id}",
+			    var readCommand = new MySqlCommand($"SELECT * FROM procedures WHERE ID='{id}'",
 				    Connection);
-			    var reader = readCommand.ExecuteReader();
-			    reader.Read();
-
-			    return Procedure.Build(
-					reader["Name"].ToString(), 
-					reader["Duration"].ToString(), 
-					reader["ProcedureID"].ToString()
-				);
+				var reader = readCommand.ExecuteReader();
+			    if (reader.Read())
+			    {
+				    return Procedure.Build(
+					    reader["Name"].ToString(),
+					    reader["Duration"].ToString(),
+					    reader["ID"].ToString()
+				    );
+			    }
+			    else
+			    {
+				    throw new BusinessException("Cannot get procedure!", new Exception());
+				}
 		    }
 		    catch (SqlException e)
 		    {
 			    throw new BusinessException("Cannot get procedure!", e);
 		    }
-	    }
+			finally
+			{
+				Connection.Close();
+			}
+		}
     }
 }

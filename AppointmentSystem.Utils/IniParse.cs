@@ -27,12 +27,10 @@ namespace AppointmentSystem.Utils
 	    public static string GetConnectionString()
 	    {
 		    string connection = "";
-		    connection += $"User Id={DbIniData["Sql"]["userId"]};";
-			connection += $"Password={DbIniData["Sql"]["password"]};";
-			connection += $"Server={DbIniData["Sql"]["server"]};";
-			//connection += $"Trusted_Connection={DbIniData["Sql"]["trustedConnection"]};";
-		    connection += $"Database={DbIniData["Sql"]["database"]};";
-		    connection += $"Connection Timeout={DbIniData["Sql"]["connectionTimeout"]};";
+		    connection += $"uid={DbIniData["Sql"]["uid"]};";
+			connection += $"pwd={DbIniData["Sql"]["pwd"]};";
+			connection += $"server={DbIniData["Sql"]["server"]};";
+		    connection += $"database={DbIniData["Sql"]["database"]};";
 		    return connection;
 	    }
 	}

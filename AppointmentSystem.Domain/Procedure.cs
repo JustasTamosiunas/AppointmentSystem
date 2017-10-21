@@ -8,7 +8,7 @@ namespace AppointmentSystem.Domain
         public string Name { get; set; }
 		public TimeSpan Duration { get; set; }
 
-	    public static Procedure Build (string procedureId, string name, string duration)
+	    public static Procedure Build (string name, string duration, string procedureId)
 	    {
 		    int minutes = Convert.ToInt32(duration);
 		    return new Procedure
